@@ -6,19 +6,89 @@ import com.juan.carplaylauncher.model.CarPlayApp
 object AppCatalog {
 
     val defaultApps: List<CarPlayApp> = listOf(
-        CarPlayApp("Teléfono", R.drawable.ic_app_phone, "com.android.dialer"),
-        CarPlayApp("Música", R.drawable.ic_app_music, "com.spotify.music"),
-        CarPlayApp("Mapas", R.drawable.ic_app_maps, "com.google.android.apps.maps"),
-        CarPlayApp("Mensajes", R.drawable.ic_app_messages, "com.google.android.apps.messaging"),
-        CarPlayApp("Spotify", R.drawable.ic_app_spotify, "com.spotify.music"),
-        CarPlayApp("Podcasts", R.drawable.ic_app_podcasts, "com.google.android.apps.podcasts"),
-        CarPlayApp("Audiolibros", R.drawable.ic_app_audiobooks),
-        CarPlayApp("Clima", R.drawable.ic_app_weather),
-        CarPlayApp("Calendario", R.drawable.ic_app_calendar, "com.google.android.calendar"),
-        CarPlayApp("Configuración", R.drawable.ic_app_settings, "com.android.settings"),
-        CarPlayApp("Waze", R.drawable.ic_app_waze, "com.waze"),
-        CarPlayApp("YT Music", R.drawable.ic_app_ytmusic, "com.google.android.apps.youtube.music"),
+
+        // Teléfono
+        CarPlayApp(
+            name = "Teléfono",
+            iconRes = R.drawable.ic_app_facetime,
+            packageName = "com.android.dialer"
+        ),
+
+        // Música (usa Spotify como reproductor principal)
+        CarPlayApp(
+            name = "Música",
+            iconRes = R.drawable.ic_app_music,
+            packageName = "com.spotify.music"
+        ),
+
+        // Mapas (dejamos sólo Google Maps, como pediste)
+        CarPlayApp(
+            name = "Mapas",
+            iconRes = R.drawable.ic_app_maps,
+            packageName = "com.google.android.apps.maps"
+        ),
+
+        // Mensajes
+        CarPlayApp(
+            name = "Mensajes",
+            iconRes = R.drawable.ic_app_mensaje,
+            packageName = "com.google.android.apps.messaging"
+        ),
+
+        // Spotify directo
+        CarPlayApp(
+            name = "Spotify",
+            iconRes = R.drawable.ic_app_spotify,
+            packageName = "com.spotify.music"
+        ),
+
+        // Play Store (reemplaza Podcasts)
+        CarPlayApp(
+            name = "Play Store",
+            iconRes = R.drawable.ic_app_appstore,
+            packageName = "com.android.vending"
+        ),
+
+        // Car DVR (reemplaza Audiolibros)
+        CarPlayApp(
+            name = "Car DVR",
+            iconRes = R.drawable.ic_app_camera,
+            packageName = "com.syu.dvr"
+        ),
+
+        // Sound Effects / Ecualizador (reemplaza Clima)
+        CarPlayApp(
+            name = "Sound Effects",
+            iconRes = R.drawable.ic_app_voice,
+            packageName = "com.ts.soundeffect"
+        ),
+
+        // Calendario
+        CarPlayApp(
+            name = "Calendario",
+            iconRes = R.drawable.ic_app_calendar,
+            packageName = "com.google.android.calendar"
+        ),
+
+        // Configuración del coche / sistema
+        CarPlayApp(
+            name = "Configuración",
+            iconRes = R.drawable.ic_app_settings,
+            packageName = "com.android.settings"
+        ),
+
+        // Waze
+        CarPlayApp(
+            name = "Waze",
+            iconRes = R.drawable.ic_app_waze,
+            packageName = "com.waze"
+        ),
+
+        // YouTube Music
+        CarPlayApp(
+            name = "YT Music",
+            iconRes = R.drawable.ic_app_ytmusic,
+            packageName = "com.google.android.apps.youtube.music"
+        ),
     )
 }
-
-

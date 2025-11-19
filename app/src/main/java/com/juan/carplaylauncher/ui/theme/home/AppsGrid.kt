@@ -49,16 +49,8 @@ fun CarPlayAppIcon(
 
         Box(
             modifier = Modifier
-                .size(86.dp)
-                .clip(RoundedCornerShape(22.dp))
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            Color(0xFFFFA855),
-                            Color(0xFFFF4D3D)
-                        )
-                    )
-                )
+                .size(120.dp) // tamaño igual que antes
+                .clip(RoundedCornerShape(22.dp)) // mantiene forma invisible
                 .clickable { onClick() }
                 .padding(18.dp),
             contentAlignment = Alignment.Center
@@ -66,7 +58,7 @@ fun CarPlayAppIcon(
             Image(
                 painter = painterResource(app.iconRes),
                 contentDescription = app.name,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(120.dp)
             )
         }
 
@@ -87,3 +79,4 @@ fun CarPlayAppIcon(
         }
     }
 }
+

@@ -28,7 +28,7 @@ fun CarPlaySidebar(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(32.dp))
-            .background(Color(0x11000000))
+            .background(Color(0x55000000))
             .padding(vertical = 20.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally

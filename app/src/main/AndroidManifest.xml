@@ -2,23 +2,31 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.juan.carplaylauncher">
 
-    <!-- Permisos básicos -->
+    <!-- Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Bluetooth (para mostrar estado BT / controles de audio si luego los usas) -->
+    <!-- Bluetooth -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission
         android:name="android.permission.BLUETOOTH_CONNECT"
         android:required="false" />
 
+    <!-- Notificaciones -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Ubicación -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
         android:icon="@drawable/ic_launcher_roundic_launcher_round"
         android:roundIcon="@drawable/ic_launcher_roundic_launcher_round"
-        android:theme="@style/Theme.CarplayLauncher">
+        android:theme="@style/Theme.CarplayLauncher"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
@@ -27,13 +35,34 @@
             android:launchMode="singleTask"
             android:resizeableActivity="false">
 
-            <!-- Solo como app normal que aparece en el launcher -->
+            <!-- App launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- CALLBACK SPOTIFY -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="carplaylauncher"
+                    android:host="callback" />
+            </intent-filter>
+
         </activity>
+
+        <!-- LISTENER NOTIFICACIONES -->
+        <service
+            android:name=".media.MediaNotificationListener"
+            android:label="CarPlay Media Listener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
     </application>
 

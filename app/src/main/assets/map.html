@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>CarPlay Navigation</title>
+
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.js"></script>
+
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.css" rel="stylesheet" />
+
+    <style>
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        #map {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .vehicle-marker {
+            width: 40px;
+            height: 40px;
+            background: url("car_icon.png") no-repeat center center;
+            background-size: contain;
+        }
+    </style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+    mapboxgl.accessToken = "pk.eyJ1Ijoibmluc2l2MiIsImEiOiJjbWkyN2NiaXkxZDVzMmpxMWpzYWlibmV2In0.1LhMKvy_VaM7zU0a7V6xDw";
+
+    const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/navigation-night-v1",
+        center: [-76.5205, 3.4516],
+        zoom: 15,
+        pitch: 60,
+        bearing: 0
+    });
+
+    let mapLoaded = false;
+    let pendingUpdate = null;
+    let userMarker = null;
+
+    // Esperar mapa cargado antes de usarlo
+    map.on("load", () => {
+        mapLoaded = true;
+
+        const directions = new MapboxDirections({
+            accessToken: mapboxgl.accessToken,
+            unit: "metric",
+            profile: "mapbox/driving",
+            controls: { instructions: true }
+        });
+        map.addControl(directions, "top-left");
+
+        // Si había coordenadas guardadas antes de que cargara el mapa, las aplicamos aquí
+        if (pendingUpdate) {
+            updatePosition(pendingUpdate.lat, pendingUpdate.lng);
+            pendingUpdate = null;
+        }
+    });
+
+    function updatePosition(lat, lng) {
+
+        // Si el mapa NO está listo → guardamos coords temporalmente y esperamos
+        if (!mapLoaded) {
+            pendingUpdate = { lat, lng };
+            return;
+        }
+
+        // Si es el primer punto → crear ícono
+        if (!userMarker) {
+            userMarker = new mapboxgl.Marker({
+                element: createCarIcon()
+            }).setLngLat([lng, lat]).addTo(map);
+
+            map.jumpTo({
+                center: [lng, lat],
+                zoom: 16
+            });
+
+            return;
+        }
+
+        // Actualizar icono
+        userMarker.setLngLat([lng, lat]);
+
+        // Movimiento suave sin rotación loca
+        map.easeTo({
+            center: [lng, lat],
+            zoom: Math.max(map.getZoom(), 15),
+            bearing: 0,
+            pitch: 60,
+            duration: 800,
+            essential: true
+        });
+    }
+
+    function createCarIcon() {
+        const el = document.createElement("div");
+        el.className = "vehicle-marker";
+        return el;
+    }
+
+    map.on("click", (e) => {
+        if (!mapLoaded) return;
+        // Cuando hace click, setear destino si se desea
+    });
+</script>
+
+</body>
+</html>
