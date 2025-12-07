@@ -14,8 +14,8 @@ import java.util.Base64
 
 object SpotifyAuth {
 
-    private const val CLIENT_ID = "62c2a7a012904a9086f85a57c45884bb"
-    private const val CLIENT_SECRET = "4ae30d4f312042428358d38cd0db2da3"
+    private const val CLIENT_ID = "xd"
+    private const val CLIENT_SECRET = "xd"
     private const val REDIRECT_URI = "carplaylauncher://callback"
 
     private const val AUTH_URL = "https://accounts.spotify.com/authorize"
@@ -72,7 +72,6 @@ object SpotifyAuth {
         }
     }
 
-    // Refresca el token cuando el actual esté vencido
     suspend fun refreshAccessToken(context: Context): Boolean {
         val currentRefresh = refreshToken ?: return false
 
@@ -101,7 +100,6 @@ object SpotifyAuth {
 
                 val json = JSONObject(body)
                 accessToken = json.getString("access_token")
-                // A veces Spotify devuelve nuevo refresh; si no, dejamos el que ya teníamos
                 refreshToken = json.optString("refresh_token", refreshToken)
 
                 saveTokens(context)
