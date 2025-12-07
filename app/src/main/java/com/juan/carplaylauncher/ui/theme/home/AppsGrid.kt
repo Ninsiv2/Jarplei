@@ -28,8 +28,8 @@ fun CarPlayAppsGrid(
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(5),
-        horizontalArrangement = Arrangement.spacedBy(22.dp),
-        verticalArrangement = Arrangement.spacedBy(22.dp)
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         items(apps) { app ->
             CarPlayAppIcon(
@@ -45,24 +45,33 @@ fun CarPlayAppIcon(
     app: CarPlayApp,
     onClick: () -> Unit
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
         Box(
             modifier = Modifier
-                .size(120.dp) // tamaño igual que antes
-                .clip(RoundedCornerShape(22.dp)) // mantiene forma invisible
-                .clickable { onClick() }
-                .padding(18.dp),
+                .size(120.dp)
+                .clip(RoundedCornerShape(26.dp))
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color.White.copy(alpha = 0.18f),
+                            Color.White.copy(alpha = 0.02f)
+                        )
+                    )
+                )
+                .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(app.iconRes),
                 contentDescription = app.name,
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier.size(96.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Box(
             modifier = Modifier
@@ -79,4 +88,3 @@ fun CarPlayAppIcon(
         }
     }
 }
-

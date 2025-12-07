@@ -1,29 +1,41 @@
 package com.juan.carplaylauncher.ui.home
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun CarPlayPageDots(pageCount: Int, currentPage: Int) {
+fun CarPlayPageDots(
+    pageCount: Int,
+    currentPage: Int
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 6.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(pageCount) { idx ->
-            val active = idx == currentPage
+        repeat(pageCount) { index ->
+            val size = animateDpAsState(if (index == currentPage) 10.dp else 6.dp).value
+            val color = animateColorAsState(
+                if (index == currentPage) Color.White else Color.White.copy(alpha = 0.35f)
+            ).value
+
             Box(
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
-                    .height(8.dp)
-                    .width(if (active) 20.dp else 8.dp)
+                    .size(size)
                     .clip(CircleShape)
-                    .background(if (active) Color.White else Color(0x55FFFFFF))
+                    .background(color)
             )
         }
     }

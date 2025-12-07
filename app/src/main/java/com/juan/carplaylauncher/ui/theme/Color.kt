@@ -1,11 +1,21 @@
-package com.juan.carplaylauncher.ui.theme
+package com.juan.carplaylauncher.ui.ui
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// ==== COLORES PRINCIPALES (iOS CarPlay Style) ====
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val CarPlayAccentGreen = Color(0xFF30D158)
+val CarPlayAccentBlue = Color(0xFF0A84FF)
+
+val CarPlayBackground = Color(0xFF0A0D14)     // fondo profundo estilo iOS
+val CarPlaySurface = Color(0xFF11141C)        // tarjetas
+val CarPlaySurfaceHigh = Color(0xFF1A1D26)    // tarjetas elevadas
+
+val CarPlayTextPrimary = Color(0xFFFFFFFF)
+val CarPlayTextSecondary = Color(0xCCFFFFFF)
+
+val CarPlayError = Color(0xFFFF453A)
+
+// Bordes estilo Apple
+val CarPlayBorderSoft = Color(0x22FFFFFF)
+val CarPlayBorderStrong = Color(0x44FFFFFF)

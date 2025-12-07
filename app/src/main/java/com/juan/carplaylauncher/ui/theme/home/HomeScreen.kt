@@ -1,13 +1,15 @@
 package com.juan.carplaylauncher.ui.home
 
-import com.juan.carplaylauncher.R
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,690 +18,230 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.juan.carplaylauncher.MapScreen
-import com.juan.carplaylauncher.data.AppCatalog
-import com.juan.carplaylauncher.model.CarPlayApp
-import com.juan.carplaylauncher.system.getNetworkStatus
-import com.juan.carplaylauncher.system.launchApp
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.juan.carplaylauncher.R
+import com.juan.carplaylauncher.ui.ui.music.ControlButton
+import com.juan.carplaylauncher.ui.ui.music.MusicState
+import com.juan.carplaylauncher.ui.ui.music.PlayPauseButtonApple
 
-// ==== imports clima / ubicación ====
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationManager
-import androidx.core.content.ContextCompat
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONObject
-import kotlin.math.roundToInt
+// =======================================================
+// ESTADO GLOBAL DEL REPRODUCTOR
+// =======================================================
 
-// =================== ESTADO Y SCREENS =======================
-
-data class HomeUiState(
-    val apps: List<CarPlayApp>,
-    val currentPage: Int = 0,
-    val recentApps: List<CarPlayApp> = emptyList()
+data class MusicState(
+    val connected: Boolean = false,
+    val playing: Boolean = false,
+    val title: String = "Conectar Spotify",
+    val artist: String = "",
+    val cover: Int? = null,
+    val progress: Float = 0f
 )
 
-sealed class CarPlayScreen {
-    object Launcher : CarPlayScreen()
-    object MapDashboard : CarPlayScreen()
-    object Music : CarPlayScreen()
-}
-
-// =================== ROOT =======================
+// =======================================================
+// REPRODUCTOR ESTILO CARPLAY / APPLE MUSIC
+// =======================================================
 
 @Composable
-fun CarPlayHomeScreen() {
-    var uiState by remember {
-        mutableStateOf(HomeUiState(apps = AppCatalog.defaultApps))
-    }
-
-    var currentScreen by remember {
-        mutableStateOf<CarPlayScreen>(CarPlayScreen.Launcher)
-    }
-
-    when (currentScreen) {
-        is CarPlayScreen.Launcher -> {
-            LauncherScreen(
-                uiState = uiState,
-                onUiStateChange = { uiState = it },
-                onOpenMap = { currentScreen = CarPlayScreen.MapDashboard },
-                onOpenMusic = { currentScreen = CarPlayScreen.Music }
-            )
-        }
-
-        is CarPlayScreen.MapDashboard -> {
-            MapDashboardScreen(
-                onBackHome = { currentScreen = CarPlayScreen.Launcher }
-            )
-        }
-
-        is CarPlayScreen.Music -> {
-            MusicScreen(
-                onBackHome = { currentScreen = CarPlayScreen.Launcher }
-            )
-        }
-    }
-}
-
-// =================== BARRA SUPERIOR =======================
-
-@Composable
-fun CarPlayStatusBar(
-    modifier: Modifier = Modifier
+fun MusicPlayerApple(
+    state: MusicState,
+    modifier: Modifier = Modifier,
+    expanded: Boolean = false,
+    onConnect: () -> Unit = {},
+    onPlayPause: () -> Unit = {},
+    onNext: () -> Unit = {},
+    onPrev: () -> Unit = {}
 ) {
-    val timeText = remember {
-        SimpleDateFormat("H:mm", Locale.getDefault()).format(Date())
-    }
+
+    val coverSize by animateDpAsState(
+        targetValue = if (expanded) 210.dp else 90.dp,
+        animationSpec = tween(300)
+    )
+
+    val titleSize = if (expanded) 32.sp else 18.sp
+    val artistSize = if (expanded) 20.sp else 14.sp
 
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(32.dp)
-            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.18f),
+                        Color.White.copy(alpha = 0.08f)
+                    )
+                )
+            )
+            .shadow(
+                elevation = 22.dp,
+                shape = RoundedCornerShape(26.dp),
+                clip = false
+            )
+            .padding(20.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Hora
+
+            // -------------------------------------------
+            // HEADER
+            // -------------------------------------------
             Text(
-                text = timeText,
-                color = Color.White,
+                text = if (state.connected) "En reproducción" else "Spotify",
+                fontSize = if (expanded) 22.sp else 16.sp,
+                color = Color.White.copy(alpha = 0.85f)
             )
 
-            // Señal + WiFi + Batería
+            // -------------------------------------------
+            // COVER + INFO
+            // -------------------------------------------
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Wi-Fi",
-                    color = Color.White.copy(alpha = 0.9f)
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
-                    Box(
-                        Modifier
-                            .size(width = 3.dp, height = 6.dp)
-                            .background(Color.White.copy(alpha = 0.7f))
-                    )
-                    Box(
-                        Modifier
-                            .size(width = 3.dp, height = 9.dp)
-                            .background(Color.White.copy(alpha = 0.85f))
-                    )
-                    Box(
-                        Modifier
-                            .size(width = 3.dp, height = 12.dp)
-                            .background(Color.White)
-                    )
-                }
 
                 Box(
                     modifier = Modifier
-                        .width(20.dp)
-                        .height(10.dp)
-                        .background(
-                            Color.White.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(3.dp)
+                        .size(coverSize)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Color.Black.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (state.cover != null) {
+                        Image(
+                            painter = painterResource(id = state.cover),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
-                        .padding(1.dp)
+                    } else {
+                        Text("🎵", fontSize = if (expanded) 55.sp else 35.sp)
+                    }
+                }
+
+                Column {
+                    Text(
+                        text = state.title,
+                        color = Color.White,
+                        fontSize = titleSize
+                    )
+                    Text(
+                        text = state.artist,
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = artistSize
+                    )
+                }
+            }
+
+            // -------------------------------------------
+            // PROGRESS BAR
+            // -------------------------------------------
+            if (state.connected) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(if (expanded) 10.dp else 6.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(Color.White.copy(alpha = 0.25f))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .fillMaxWidth(0.7f)
-                            .background(Color.White, shape = RoundedCornerShape(2.dp))
+                            .fillMaxWidth(state.progress)
+                            .background(Color.White)
                     )
                 }
             }
-        }
-    }
-}
 
-// =================== PANTALLA LAUNCHER =======================
-
-@Composable
-private fun LauncherScreen(
-    uiState: HomeUiState,
-    onUiStateChange: (HomeUiState) -> Unit,
-    onOpenMap: () -> Unit,
-    onOpenMusic: () -> Unit
-) {
-    val context = LocalContext.current
-
-    val appsPerPage = 10
-    val pages = remember(uiState.apps) { uiState.apps.chunked(appsPerPage) }
-    val pageCount = pages.size
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-
-        Image(
-            painter = painterResource(id = R.drawable.background),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.25f))
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 6.dp, bottom = 8.dp)
-        ) {
-
-            CarPlayStatusBar()
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 4.dp)
-            ) {
-
-                CarPlaySidebar(
-                    modifier = Modifier
-                        .width(95.dp)
-                        .fillMaxHeight(),
-                    recentApps = uiState.recentApps,
-                    networkStatus = getNetworkStatus(context)
-                )
-
-                Spacer(modifier = Modifier.width(22.dp))
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 28.dp, top = 16.dp, bottom = 16.dp)
+            // -------------------------------------------
+            // CONTROLES DE REPRODUCCIÓN
+            // -------------------------------------------
+            AnimatedVisibility(visible = state.connected) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .pointerInput(pageCount, uiState.currentPage) {
-                                detectHorizontalDragGestures { _, drag ->
-                                    when {
-                                        drag > 40 && uiState.currentPage > 0 ->
-                                            onUiStateChange(
-                                                uiState.copy(currentPage = uiState.currentPage - 1)
-                                            )
-
-                                        drag < -40 && uiState.currentPage < pageCount - 1 ->
-                                            onUiStateChange(
-                                                uiState.copy(currentPage = uiState.currentPage + 1)
-                                            )
-                                    }
-                                }
-                            }
-                    ) {
-                        CarPlayAppsGrid(
-                            apps = pages[uiState.currentPage],
-                            onAppClick = { app ->
-                                when (app.name) {
-                                    "Mapas" -> onOpenMap()
-                                    "Spotify", "Música", "YT Music" -> onOpenMusic()
-                                    else -> {
-                                        val newRecents = updateRecents(uiState.recentApps, app)
-                                        onUiStateChange(uiState.copy(recentApps = newRecents))
-                                        launchApp(context, app)
-                                    }
-                                }
-                            }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    MiniMusicPlayer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(
-                                elevation = 12.dp,
-                                shape = RoundedCornerShape(24.dp),
-                                clip = false
-                            )
+                    ControlButton(icon = R.drawable.ic_prev, onClick = onPrev)
+                    PlayPauseButtonApple(
+                        playing = state.playing,
+                        onClick = onPlayPause
                     )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    CarPlayPageDots(
-                        pageCount = pageCount,
-                        currentPage = uiState.currentPage
-                    )
+                    ControlButton(icon = R.drawable.ic_next, onClick = onNext)
                 }
             }
-        }
-    }
-}
 
-// =================== PANTALLA MAPA =======================
-
-@Composable
-fun MapDashboardScreen(
-    onBackHome: () -> Unit
-) {
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-
-        Image(
-            painter = painterResource(id = R.drawable.background),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 6.dp, bottom = 8.dp)
-        ) {
-
-            CarPlayStatusBar()
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp)
-            ) {
-
+            // -------------------------------------------
+            // BOTÓN DE CONEXIÓN
+            // -------------------------------------------
+            AnimatedVisibility(visible = !state.connected) {
                 Box(
                     modifier = Modifier
-                        .weight(2f)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(Color(0xFF1ED760))
+                        .clickable { onConnect() }
+                        .padding(horizontal = 26.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    MapScreen(
-                        modifier = Modifier.fillMaxSize(),
-                        showBackButton = false
+                    Text(
+                        "Conectar Spotify",
+                        color = Color.White,
+                        fontSize = 16.sp
                     )
                 }
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                        // 🌤 CLIMA
-                        GlassTile(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            WeatherWidget(
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        // 🎵 REPRODUCTOR NUEVO
-                        MiniMusicPlayer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        )
-
-                        // 🧭 TEXTO NAVEGACIÓN
-                        GlassTile(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            SmartNavWidget(
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                }
             }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(Color.White.copy(alpha = 0.95f))
-                .clickable { onBackHome() }
-                .padding(horizontal = 28.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Home",
-                color = Color.Black
-            )
         }
     }
 }
 
-// =================== PANTALLA MÚSICA =======================
+// =======================================================
+// BOTONES APPLE
+// =======================================================
 
 @Composable
-fun MusicScreen(
-    onBackHome: () -> Unit
-) {
+fun ControlButton(icon: Int, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF35003A),
-                        Color(0xFF070015)
-                    )
-                )
-            )
+            .size(60.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White.copy(alpha = 0.15f))
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 6.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            CarPlayStatusBar()
-            Spacer(modifier = Modifier.height(10.dp))
-
-            MiniMusicPlayer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .shadow(
-                        elevation = 12.dp,
-                        shape = RoundedCornerShape(24.dp),
-                        clip = false
-                    )
-            )
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(Color.White.copy(alpha = 0.9f))
-                    .clickable { onBackHome() }
-                    .padding(horizontal = 28.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Home",
-                    color = Color.Black
-                )
-            }
-        }
+        Icon(
+            painter = painterResource(id = icon),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(26.dp)
+        )
     }
 }
-
-// =================== WIDGET CLIMA =======================
 
 @Composable
-fun WeatherWidget(
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
+fun PlayPauseButtonApple(playing: Boolean, onClick: () -> Unit) {
 
-    var weather by remember { mutableStateOf<WeatherInfo?>(null) }
-    var loading by remember { mutableStateOf(true) }
+    val size by animateDpAsState(
+        targetValue = if (playing) 90.dp else 92.dp,
+        animationSpec = tween(260, easing = FastOutSlowInEasing)
+    )
 
-    LaunchedEffect(Unit) {
-        weather = getWeatherForCurrentLocation(context)
-        loading = false
-    }
-
-    Column(
-        modifier = modifier
-            .padding(horizontal = 2.dp, vertical = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(RoundedCornerShape(999.dp))
+            .background(Color.White)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Clima",
-            color = Color.White.copy(alpha = 0.9f)
+            if (playing) "⏸" else "▶️",
+            fontSize = 34.sp,
+            color = Color.Black
         )
-
-        if (loading) {
-            Text(
-                text = "Obteniendo ubicación...",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 13.sp
-            )
-            return@Column
-        }
-
-        val info = weather
-
-        if (info == null) {
-            Text(
-                text = "Activa la ubicación para ver el clima",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 13.sp
-            )
-            return@Column
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(
-                        Brush.radialGradient(
-                            listOf(
-                                Color(0xFFFFD65B),
-                                Color(0xFFFF8A00)
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "☀",
-                    color = Color.White,
-                    fontSize = 22.sp
-                )
-            }
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = "${info.temperature}°",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "${info.city} · ${info.description}",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 13.sp
-                )
-            }
-        }
-
-        Text(
-            text = "Se siente como ${info.feelsLike}°. Datos por GPS.",
-            color = Color.White.copy(alpha = 0.8f),
-            fontSize = 12.sp
-        )
-    }
-}
-
-// =================== TEXTO NAVEGACIÓN =======================
-
-@Composable
-fun SmartNavWidget(
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .padding(horizontal = 2.dp, vertical = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = "Navegación",
-            color = Color.White.copy(alpha = 0.9f)
-        )
-        Text(
-            text = "Toca un punto en el mapa para marcar un destino.",
-            color = Color.White
-        )
-        Text(
-            text = "Aquí verás distancia y hora estimada.",
-            color = Color.White.copy(alpha = 0.8f)
-        )
-    }
-}
-
-// =================== TARJETA GLASS =======================
-
-@Composable
-fun GlassTile(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.22f),
-                        Color.White.copy(alpha = 0.10f)
-                    )
-                )
-            )
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        content()
-    }
-}
-
-// =================== HELPERS =======================
-
-private fun updateRecents(
-    current: List<CarPlayApp>,
-    app: CarPlayApp
-): List<CarPlayApp> {
-    val list = current.toMutableList()
-    list.removeAll { it.name == app.name }
-    list.add(0, app)
-    if (list.size > 3) list.removeAt(list.lastIndex)
-    return list
-}
-
-// ---- Clima ----
-
-data class WeatherInfo(
-    val temperature: Int,
-    val feelsLike: Int,
-    val description: String,
-    val city: String
-)
-
-private suspend fun getWeatherForCurrentLocation(context: Context): WeatherInfo? {
-    val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
-    val hasLocationPermission =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED
-
-    if (!hasLocationPermission) return null
-
-    val provider = when {
-        lm.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
-        lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> LocationManager.NETWORK_PROVIDER
-        else -> return null
-    }
-
-    val lastLocation: Location = lm.getLastKnownLocation(provider) ?: return null
-    val lat = lastLocation.latitude
-    val lon = lastLocation.longitude
-
-    return withContext(Dispatchers.IO) {
-        try {
-            val client = OkHttpClient()
-
-            // 1) Clima actual
-            val weatherUrl =
-                "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true&timezone=auto"
-            val weatherReq = Request.Builder().url(weatherUrl).build()
-            val weatherRes = client.newCall(weatherReq).execute()
-            val weatherBody = weatherRes.body?.string() ?: return@withContext null
-            val weatherJson = JSONObject(weatherBody)
-            val current = weatherJson.getJSONObject("current_weather")
-
-            val temp = current.getDouble("temperature").roundToInt()
-            val feelsLike = temp
-            val code = current.getInt("weathercode")
-
-            val description = when (code) {
-                0 -> "Despejado"
-                1, 2, 3 -> "Parcialmente nublado"
-                45, 48 -> "Niebla"
-                51, 53, 55 -> "Llovizna"
-                61, 63, 65 -> "Lluvia"
-                71, 73, 75 -> "Nieve"
-                80, 81, 82 -> "Chubascos"
-                else -> "Clima variable"
-            }
-
-            // 2) Nombre de ciudad aproximado
-            val cityUrl =
-                "https://geocoding-api.open-meteo.com/v1/reverse?latitude=$lat&longitude=$lon&language=es&count=1"
-            val cityReq = Request.Builder().url(cityUrl).build()
-            val cityRes = client.newCall(cityReq).execute()
-            val cityBody = cityRes.body?.string() ?: ""
-            val cityJson = JSONObject(cityBody)
-            val results = cityJson.optJSONArray("results")
-            val cityName = results?.optJSONObject(0)?.optString("name") ?: "Ubicación actual"
-
-            WeatherInfo(
-                temperature = temp,
-                feelsLike = feelsLike,
-                description = description,
-                city = cityName
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
     }
 }
